@@ -1,6 +1,6 @@
 # Prince&Phoibe
 
-Prince&Phoibe is a two-player snake game for two Android phones. Both players connect to the same game server, create or join a room code, then compete for the same food while keeping separate scores.
+Prince&Phoibe is a snake game for Android phones. You can play alone offline, or two players can connect to the same game server, create or join a room code, then compete for the same food while keeping separate scores.
 
 ## What is included
 
@@ -11,6 +11,10 @@ Prince&Phoibe is a two-player snake game for two Android phones. Both players co
 - `.github/workflows/android-release.yml` GitHub Actions build and release workflow.
 
 ## Play from Android APK
+
+To play alone, install the APK and tap `Play Alone`. Solo mode runs fully on the phone and does not need internet, a server, or another player.
+
+To play with two phones:
 
 1. Run the game server on a computer:
 
@@ -38,9 +42,9 @@ Both phones can also open the server URL directly in Chrome. One phone creates a
 The workflow builds a signed installable APK with GitHub Actions. To publish a release from GitHub:
 
 ```powershell
-git tag v1.0.1
+git tag v1.0.2
 git push origin main
-git push origin v1.0.1
+git push origin v1.0.2
 ```
 
 GitHub will build the APK and attach it to the release tag. The release also includes a source zip backup of this folder.

@@ -38,7 +38,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -55,9 +57,13 @@ public class MainActivity extends Activity {
     private static final int BLUE = Color.rgb(79, 140, 255);
     private static final int RED = Color.rgb(239, 68, 68);
     private static final int AMBER = Color.rgb(245, 184, 59);
+    private static final int SOLO_COLS = 24;
+    private static final int SOLO_ROWS = 24;
+    private static final int SOLO_TICK_MS = 130;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
+    private final Random random = new Random();
 
     private SharedPreferences preferences;
     private EditText serverInput;
@@ -81,6 +87,14 @@ public class MainActivity extends Activity {
     private boolean inGame = false;
     private boolean polling = false;
     private boolean stateRequestRunning = false;
+    private boolean soloMode = false;
+    private boolean soloGameOver = false;
+    private int soloScore = 0;
+    private String soloDirection = "RIGHT";
+    private String soloNextDirection = "RIGHT";
+    private int soloFoodX = 12;
+    private int soloFoodY = 12;
+    private ArrayList<int[]> soloSnake = new ArrayList<>();
 
     private final Runnable pollRunnable = new Runnable() {
         @Override
@@ -90,6 +104,19 @@ public class MainActivity extends Activity {
             }
             fetchState(false);
             mainHandler.postDelayed(this, 110);
+        }
+    };
+
+    private final Runnable soloRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!soloMode || !inGame) {
+                return;
+            }
+            stepSoloGame();
+            if (!soloGameOver) {
+                mainHandler.postDelayed(this, SOLO_TICK_MS);
+            }
         }
     };
 
@@ -116,7 +143,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (inGame) {
+        if (inGame && soloMode) {
+            startSoloTick();
+        } else if (inGame) {
             startPolling();
         }
     }
@@ -125,6 +154,7 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         stopPolling();
+        stopSoloTick();
     }
 
     @Override
@@ -135,7 +165,9 @@ public class MainActivity extends Activity {
 
     private void showHome(String message) {
         inGame = false;
+        soloMode = false;
         stopPolling();
+        stopSoloTick();
 
         LinearLayout root = baseRoot();
         addTopBar(root, "Offline");
@@ -163,6 +195,14 @@ public class MainActivity extends Activity {
 
         nameInput = field("Name", preferences.getString("playerName", ""));
         panel.addView(nameInput);
+
+        Button soloButton = button("Play Alone", AMBER, Color.rgb(18, 13, 3), 0);
+        LinearLayout.LayoutParams soloParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dp(50)
+        );
+        soloParams.topMargin = dp(14);
+        panel.addView(soloButton, soloParams);
 
         Button createButton = button("Create Room", GREEN, Color.rgb(7, 18, 11), 0);
         LinearLayout.LayoutParams createParams = new LinearLayout.LayoutParams(
@@ -203,6 +243,7 @@ public class MainActivity extends Activity {
         statusParams.topMargin = dp(10);
         panel.addView(homeStatus, statusParams);
 
+        soloButton.setOnClickListener(view -> startSoloGame());
         createButton.setOnClickListener(view -> createRoom());
         joinButton.setOnClickListener(view -> joinRoom());
 
@@ -225,10 +266,15 @@ public class MainActivity extends Activity {
     }
 
     private void showGame() {
+        soloMode = false;
+        showGameScreen(false);
+    }
+
+    private void showGameScreen(boolean solo) {
         inGame = true;
 
         LinearLayout root = baseRoot();
-        addTopBar(root, "Online");
+        addTopBar(root, solo ? "Solo" : "Online");
 
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -240,7 +286,7 @@ public class MainActivity extends Activity {
 
         LinearLayout playerOnePill = scorePill(true);
         LinearLayout playerTwoPill = scorePill(false);
-        roomBadge = button(roomCode.isEmpty() ? "----" : roomCode, Color.rgb(21, 25, 31), AMBER, LINE);
+        roomBadge = button(solo ? "SOLO" : roomCode.isEmpty() ? "----" : roomCode, Color.rgb(21, 25, 31), AMBER, LINE);
 
         scoreBar.addView(playerOnePill, new LinearLayout.LayoutParams(0, dp(46), 1f));
 
@@ -259,7 +305,7 @@ public class MainActivity extends Activity {
         addSpace(content, 12);
 
         boardView = new BoardView(this);
-        boardView.setDirectionListener(this::sendDirection);
+        boardView.setDirectionListener(this::handleDirection);
         content.addView(boardView, new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             0,
@@ -314,7 +360,13 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams.WRAP_CONTENT
         ));
 
-        restartButton.setOnClickListener(view -> restartGame());
+        restartButton.setOnClickListener(view -> {
+            if (soloMode) {
+                restartSoloGame();
+            } else {
+                restartGame();
+            }
+        });
         leaveButton.setOnClickListener(view -> leaveGame());
 
         root.addView(content, new LinearLayout.LayoutParams(
@@ -389,6 +441,202 @@ public class MainActivity extends Activity {
         startPolling();
     }
 
+    private void startSoloGame() {
+        saveHomeFields();
+        soloMode = true;
+        stopPolling();
+        resetSoloState();
+        showGameScreen(true);
+        applySoloState();
+        startSoloTick();
+    }
+
+    private void restartSoloGame() {
+        resetSoloState();
+        applySoloState();
+        startSoloTick();
+    }
+
+    private void resetSoloState() {
+        soloScore = 0;
+        soloDirection = "RIGHT";
+        soloNextDirection = "RIGHT";
+        soloGameOver = false;
+        soloSnake = new ArrayList<>();
+        soloSnake.add(new int[]{5, 12});
+        soloSnake.add(new int[]{4, 12});
+        soloSnake.add(new int[]{3, 12});
+        placeSoloFood();
+    }
+
+    private void startSoloTick() {
+        stopSoloTick();
+        if (soloMode && inGame && !soloGameOver) {
+            mainHandler.postDelayed(soloRunnable, SOLO_TICK_MS);
+        }
+    }
+
+    private void stopSoloTick() {
+        mainHandler.removeCallbacks(soloRunnable);
+    }
+
+    private void stepSoloGame() {
+        if (soloGameOver || soloSnake.isEmpty()) {
+            return;
+        }
+
+        soloDirection = soloNextDirection;
+        int[] head = soloSnake.get(0);
+        int nextX = head[0] + dxFor(soloDirection);
+        int nextY = head[1] + dyFor(soloDirection);
+        boolean grows = nextX == soloFoodX && nextY == soloFoodY;
+
+        if (nextX < 0 || nextX >= SOLO_COLS || nextY < 0 || nextY >= SOLO_ROWS || hitsSoloBody(nextX, nextY, grows)) {
+            soloGameOver = true;
+            saveSoloBestScore();
+            applySoloState();
+            return;
+        }
+
+        soloSnake.add(0, new int[]{nextX, nextY});
+        if (grows) {
+            soloScore += 1;
+            saveSoloBestScore();
+            placeSoloFood();
+        } else {
+            soloSnake.remove(soloSnake.size() - 1);
+        }
+
+        applySoloState();
+    }
+
+    private void queueSoloDirection(String direction) {
+        if (direction == null || direction.isEmpty()) {
+            return;
+        }
+        if (!isOpposite(direction, soloDirection)) {
+            soloNextDirection = direction;
+        }
+    }
+
+    private void placeSoloFood() {
+        do {
+            soloFoodX = random.nextInt(SOLO_COLS);
+            soloFoodY = random.nextInt(SOLO_ROWS);
+        } while (containsSoloCell(soloFoodX, soloFoodY));
+    }
+
+    private boolean hitsSoloBody(int x, int y, boolean grows) {
+        int limit = grows ? soloSnake.size() : soloSnake.size() - 1;
+        for (int index = 0; index < limit; index++) {
+            int[] block = soloSnake.get(index);
+            if (block[0] == x && block[1] == y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsSoloCell(int x, int y) {
+        for (int[] block : soloSnake) {
+            if (block[0] == x && block[1] == y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void saveSoloBestScore() {
+        int best = preferences.getInt("soloBestScore", 0);
+        if (soloScore > best) {
+            preferences.edit().putInt("soloBestScore", soloScore).apply();
+        }
+    }
+
+    private int dxFor(String direction) {
+        if ("LEFT".equals(direction)) {
+            return -1;
+        }
+        if ("RIGHT".equals(direction)) {
+            return 1;
+        }
+        return 0;
+    }
+
+    private int dyFor(String direction) {
+        if ("UP".equals(direction)) {
+            return -1;
+        }
+        if ("DOWN".equals(direction)) {
+            return 1;
+        }
+        return 0;
+    }
+
+    private boolean isOpposite(String direction, String currentDirection) {
+        return ("UP".equals(direction) && "DOWN".equals(currentDirection))
+            || ("DOWN".equals(direction) && "UP".equals(currentDirection))
+            || ("LEFT".equals(direction) && "RIGHT".equals(currentDirection))
+            || ("RIGHT".equals(direction) && "LEFT".equals(currentDirection));
+    }
+
+    private void applySoloState() {
+        applyState(buildSoloState());
+    }
+
+    private JSONObject buildSoloState() {
+        JSONObject state = new JSONObject();
+        try {
+            JSONObject board = new JSONObject();
+            board.put("cols", SOLO_COLS);
+            board.put("rows", SOLO_ROWS);
+
+            JSONObject food = new JSONObject();
+            food.put("x", soloFoodX);
+            food.put("y", soloFoodY);
+
+            JSONArray body = new JSONArray();
+            for (int[] block : soloSnake) {
+                JSONObject cell = new JSONObject();
+                cell.put("x", block[0]);
+                cell.put("y", block[1]);
+                body.put(cell);
+            }
+
+            JSONObject player = new JSONObject();
+            String name = preferences.getString("playerName", "").trim();
+            player.put("name", name.isEmpty() ? "You" : name);
+            player.put("slot", 0);
+            player.put("color", "#24C862");
+            player.put("score", soloScore);
+            player.put("body", body);
+            player.put("isYou", true);
+
+            JSONObject best = new JSONObject();
+            best.put("name", "Best");
+            best.put("slot", 1);
+            best.put("color", "#F5B83B");
+            best.put("score", Math.max(soloScore, preferences.getInt("soloBestScore", 0)));
+            best.put("body", new JSONArray());
+            best.put("isYou", false);
+
+            JSONArray players = new JSONArray();
+            players.put(player);
+            players.put(best);
+
+            state.put("roomCode", "SOLO");
+            state.put("status", soloGameOver ? "gameover" : "playing");
+            state.put("winner", "");
+            state.put("message", soloGameOver ? "Game Over" : "");
+            state.put("detail", "Score: " + soloScore);
+            state.put("board", board);
+            state.put("food", food);
+            state.put("players", players);
+        } catch (JSONException ignored) {
+        }
+        return state;
+    }
+
     private void fetchState(boolean showErrors) {
         if (stateRequestRunning || roomCode.isEmpty() || playerId.isEmpty()) {
             return;
@@ -416,6 +664,10 @@ public class MainActivity extends Activity {
     }
 
     private void sendDirection(String direction) {
+        if (soloMode) {
+            queueSoloDirection(direction);
+            return;
+        }
         if (roomCode.isEmpty() || playerId.isEmpty()) {
             return;
         }
@@ -444,6 +696,11 @@ public class MainActivity extends Activity {
     }
 
     private void restartGame() {
+        if (soloMode) {
+            restartSoloGame();
+            return;
+        }
+
         JSONObject body = new JSONObject();
         try {
             body.put("roomCode", roomCode);
@@ -467,6 +724,9 @@ public class MainActivity extends Activity {
     }
 
     private void leaveGame() {
+        stopSoloTick();
+        stopPolling();
+        soloMode = false;
         preferences.edit()
             .remove("roomCode")
             .remove("playerId")
@@ -485,9 +745,12 @@ public class MainActivity extends Activity {
             boardView.setState(state);
         }
 
-        roomCode = state.optString("roomCode", roomCode);
+        String displayRoomCode = state.optString("roomCode", roomCode);
+        if (!"SOLO".equals(displayRoomCode)) {
+            roomCode = displayRoomCode;
+        }
         if (roomBadge != null) {
-            roomBadge.setText(roomCode);
+            roomBadge.setText(displayRoomCode);
         }
 
         JSONArray players = state.optJSONArray("players");
@@ -496,14 +759,36 @@ public class MainActivity extends Activity {
 
         String status = state.optString("status", "waiting");
         String winner = state.optString("winner", "");
+        String message = state.optString("message", "");
 
         if (gameStatus != null) {
             if ("gameover".equals(status)) {
-                gameStatus.setText("Draw".equals(winner) ? "Draw" : winner + " wins");
+                if (!message.isEmpty()) {
+                    gameStatus.setText(message + " - Score " + getOwnScore(players));
+                } else {
+                    gameStatus.setText("Draw".equals(winner) ? "Draw" : winner + " wins");
+                }
+            } else if ("SOLO".equals(displayRoomCode)) {
+                gameStatus.setText("Solo - Score " + getOwnScore(players));
             } else {
                 gameStatus.setText("Room " + roomCode);
             }
         }
+    }
+
+    private int getOwnScore(JSONArray players) {
+        if (players == null) {
+            return 0;
+        }
+
+        for (int index = 0; index < players.length(); index++) {
+            JSONObject player = players.optJSONObject(index);
+            if (player != null && player.optBoolean("isYou", false)) {
+                return player.optInt("score", 0);
+            }
+        }
+
+        return 0;
     }
 
     private void applyScore(JSONArray players, int index, TextView nameView, TextView scoreView, View dotView) {
@@ -662,8 +947,16 @@ public class MainActivity extends Activity {
     private Button controlButton(String direction, String label) {
         Button button = button(label, Color.rgb(37, 44, 54), TEXT, Color.rgb(59, 69, 84));
         button.setTextSize(24);
-        button.setOnClickListener(view -> sendDirection(direction));
+        button.setOnClickListener(view -> handleDirection(direction));
         return button;
+    }
+
+    private void handleDirection(String direction) {
+        if (soloMode) {
+            queueSoloDirection(direction);
+        } else {
+            sendDirection(direction);
+        }
     }
 
     private void addControlCell(GridLayout grid, Button button) {
@@ -963,9 +1256,12 @@ public class MainActivity extends Activity {
             canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
 
             String winner = state.optString("winner", "");
-            String title = "waiting".equals(state.optString("status", "waiting"))
-                ? "Waiting"
-                : "Draw".equals(winner) ? "Draw" : winner + " wins";
+            String message = state.optString("message", "");
+            String title = !message.isEmpty()
+                ? message
+                : "waiting".equals(state.optString("status", "waiting"))
+                    ? "Waiting"
+                    : "Draw".equals(winner) ? "Draw" : winner + " wins";
 
             paint.setTextAlign(Paint.Align.CENTER);
             paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
@@ -975,7 +1271,7 @@ public class MainActivity extends Activity {
 
             paint.setColor(Color.rgb(245, 184, 59));
             paint.setTextSize(22f * getResources().getDisplayMetrics().scaledDensity);
-            canvas.drawText(state.optString("roomCode", ""), getWidth() / 2f, getHeight() / 2f + 34f, paint);
+            canvas.drawText(state.optString("detail", state.optString("roomCode", "")), getWidth() / 2f, getHeight() / 2f + 34f, paint);
         }
 
         private String directionFromDelta(float dx, float dy) {
