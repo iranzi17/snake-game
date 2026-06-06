@@ -278,7 +278,6 @@ public class MainActivity extends Activity {
         controls.setRowCount(2);
         controls.setUseDefaultMargins(false);
         controls.setAlignmentMode(GridLayout.ALIGN_BOUNDS);
-        controls.setGravity(Gravity.CENTER);
 
         addControlCell(controls, null);
         addControlCell(controls, controlButton("UP", "^"));

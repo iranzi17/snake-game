@@ -38,12 +38,12 @@ Both phones can also open the server URL directly in Chrome. One phone creates a
 The workflow builds a signed installable APK with GitHub Actions. To publish a release from GitHub:
 
 ```powershell
-git tag v1.0.0
+git tag v1.0.1
 git push origin main
-git push origin v1.0.0
+git push origin v1.0.1
 ```
 
-GitHub will build the APK and attach it to the `v1.0.0` release. The release also includes a source zip backup of this folder.
+GitHub will build the APK and attach it to the release tag. The release also includes a source zip backup of this folder.
 
 ## Local Android build
 
