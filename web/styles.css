@@ -1,0 +1,375 @@
+:root {
+  color-scheme: dark;
+  --bg: #101319;
+  --panel: #181d24;
+  --panel-strong: #202732;
+  --line: #303844;
+  --text: #f4f6f8;
+  --muted: #aeb7c2;
+  --green: #24c862;
+  --blue: #4f8cff;
+  --red: #ef4444;
+  --amber: #f5b83b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  overflow-x: hidden;
+  touch-action: manipulation;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
+}
+
+.topbar {
+  width: min(100%, 640px);
+  min-height: 58px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.brand-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, var(--green) 0 45%, transparent 45% 55%, var(--blue) 55%),
+    var(--panel-strong);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex: 0 0 auto;
+}
+
+.connection {
+  min-width: 82px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.main {
+  width: min(100%, 640px);
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel,
+.game-view {
+  width: 100%;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 18px;
+}
+
+.logo-scene {
+  position: relative;
+  height: 128px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #12161d;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.snake-line {
+  position: absolute;
+  height: 20px;
+  border-radius: 6px;
+}
+
+.snake-one {
+  left: 28px;
+  top: 34px;
+  width: 164px;
+  background: var(--green);
+  box-shadow: 24px 24px 0 var(--green), 48px 24px 0 var(--green);
+}
+
+.snake-two {
+  right: 28px;
+  bottom: 34px;
+  width: 164px;
+  background: var(--blue);
+  box-shadow: -24px -24px 0 var(--blue), -48px -24px 0 var(--blue);
+}
+
+.food-dot {
+  position: absolute;
+  left: calc(50% - 10px);
+  top: calc(50% - 10px);
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--red);
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.field input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0f1319;
+  color: var(--text);
+  padding: 0 13px;
+  outline: none;
+  text-transform: none;
+}
+
+.field input:focus {
+  border-color: var(--amber);
+}
+
+.room-field input {
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.primary-button,
+.secondary-button,
+.quiet-button,
+.room-badge {
+  min-height: 48px;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 700;
+}
+
+.primary-button {
+  width: 100%;
+  margin-top: 14px;
+  background: var(--green);
+  color: #07120b;
+}
+
+.secondary-button {
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+}
+
+.quiet-button {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.join-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: 10px;
+  margin-top: 14px;
+  align-items: end;
+}
+
+.error {
+  min-height: 22px;
+  margin: 12px 0 0;
+  color: #ff8d8d;
+}
+
+.hidden {
+  display: none;
+}
+
+.game-view {
+  display: flex;
+  min-height: calc(100dvh - 72px);
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.game-view.hidden {
+  display: none;
+}
+
+.scorebar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.score-pill,
+.room-badge {
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.score-pill {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+}
+
+.score-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--muted);
+}
+
+.score-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.score-pill strong {
+  font-size: 1.1rem;
+}
+
+.room-badge {
+  min-width: 76px;
+  color: var(--amber);
+  background: #15191f;
+}
+
+.board-shell {
+  display: flex;
+  justify-content: center;
+}
+
+#gameCanvas {
+  width: min(100%, 560px, calc(100dvh - 280px));
+  min-width: 280px;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #11151b;
+  touch-action: none;
+}
+
+.game-status {
+  min-height: 28px;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.controls {
+  width: min(100%, 270px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 78px);
+  grid-template-rows: repeat(2, 60px);
+  justify-content: center;
+  gap: 8px;
+}
+
+.direction-button {
+  min-height: 60px;
+  border-radius: 8px;
+  background: #252c36;
+  border: 1px solid #3b4554;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.direction-button:active {
+  background: var(--amber);
+  color: #12100a;
+}
+
+.center-button {
+  background: #20262f;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 380px) {
+  .app {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .scorebar {
+    gap: 6px;
+  }
+
+  .score-pill {
+    padding: 0 8px;
+  }
+
+  .room-badge {
+    min-width: 66px;
+    padding: 0 10px;
+  }
+
+  .controls {
+    grid-template-columns: repeat(3, 70px);
+    grid-template-rows: repeat(2, 56px);
+  }
+
+  .direction-button {
+    min-height: 56px;
+  }
+}

@@ -1,0 +1,61 @@
+name: Android release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Build APK
+        run: gradle --no-daemon :app:assembleRelease
+
+      - name: Prepare release files
+        shell: bash
+        run: |
+          mkdir -p release
+          cp app/build/outputs/apk/release/app-release.apk release/CouplesSnake-${GITHUB_REF_NAME:-manual}.apk
+          zip -r release/CouplesSnake-source-${GITHUB_REF_NAME:-manual}.zip . \
+            -x ".git/*" ".gradle/*" "release/*" "**/build/*"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CouplesSnake-android
+          path: release/*
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" release/* \
+            --title "Couples Snake ${GITHUB_REF_NAME}" \
+            --notes "Install the APK on both Android phones. Run the Python server from the source backup, enter the server URL in the app, then create or join a room code."

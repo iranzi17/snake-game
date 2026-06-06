@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101319">
+  <title>Couples Snake</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Couples Snake</span>
+      </div>
+      <div id="connectionStatus" class="connection">Offline</div>
+    </header>
+
+    <main class="main">
+      <section id="homeView" class="panel">
+        <div class="logo-scene" aria-hidden="true">
+          <span class="snake-line snake-one"></span>
+          <span class="snake-line snake-two"></span>
+          <span class="food-dot"></span>
+        </div>
+
+        <label class="field">
+          <span>Name</span>
+          <input id="nameInput" maxlength="18" autocomplete="name" placeholder="Your name">
+        </label>
+
+        <button id="createRoomButton" class="primary-button" type="button">Create Room</button>
+
+        <div class="join-row">
+          <label class="field room-field">
+            <span>Code</span>
+            <input id="roomCodeInput" maxlength="4" autocomplete="off" inputmode="latin" placeholder="AB12">
+          </label>
+          <button id="joinRoomButton" class="secondary-button" type="button">Join</button>
+        </div>
+
+        <p id="homeError" class="error" role="status"></p>
+      </section>
+
+      <section id="gameView" class="game-view hidden">
+        <div class="scorebar">
+          <div class="score-pill" id="playerOneScore">
+            <span class="score-dot"></span>
+            <span class="score-name">Player 1</span>
+            <strong>0</strong>
+          </div>
+          <button id="roomBadge" class="room-badge" type="button">----</button>
+          <div class="score-pill" id="playerTwoScore">
+            <span class="score-dot"></span>
+            <span class="score-name">Player 2</span>
+            <strong>0</strong>
+          </div>
+        </div>
+
+        <div class="board-shell">
+          <canvas id="gameCanvas" width="720" height="720"></canvas>
+        </div>
+
+        <div id="gameStatus" class="game-status" role="status"></div>
+
+        <div class="controls" aria-label="Direction controls">
+          <span></span>
+          <button class="direction-button" type="button" data-direction="UP" aria-label="Up">↑</button>
+          <span></span>
+          <button class="direction-button" type="button" data-direction="LEFT" aria-label="Left">←</button>
+          <button class="direction-button center-button" type="button" data-direction="DOWN" aria-label="Down">↓</button>
+          <button class="direction-button" type="button" data-direction="RIGHT" aria-label="Right">→</button>
+        </div>
+
+        <div class="action-row">
+          <button id="restartButton" class="secondary-button" type="button">Restart</button>
+          <button id="leaveButton" class="quiet-button" type="button">Leave</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/game.js"></script>
+</body>
+</html>
