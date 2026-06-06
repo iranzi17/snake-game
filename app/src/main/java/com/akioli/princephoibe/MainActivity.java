@@ -1,4 +1,4 @@
-package com.akioli.couplessnake;
+package com.akioli.princephoibe;
 
 import android.app.Activity;
 import android.content.Context;
@@ -586,7 +586,7 @@ public class MainActivity extends Activity {
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
 
-        TextView brand = label("Couples Snake", TEXT, 18, Typeface.BOLD);
+        TextView brand = label("Prince&Phoibe", TEXT, 18, Typeface.BOLD);
         bar.addView(brand, new LinearLayout.LayoutParams(0, dp(54), 1f));
 
         connectionStatus = label(status, MUTED, 13, Typeface.BOLD);

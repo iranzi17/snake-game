@@ -1,6 +1,6 @@
-# Couples Snake
+# Prince&Phoibe
 
-Couples Snake is a two-player snake game for two Android phones. Both players connect to the same game server, create or join a room code, then compete for the same food while keeping separate scores.
+Prince&Phoibe is a two-player snake game for two Android phones. Both players connect to the same game server, create or join a room code, then compete for the same food while keeping separate scores.
 
 ## What is included
 

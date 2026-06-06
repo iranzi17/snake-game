@@ -444,7 +444,7 @@ def get_lan_ip() -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run the Couples Snake phone server.")
+    parser = argparse.ArgumentParser(description="Run the Prince&Phoibe phone server.")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", default=8000, type=int)
     args = parser.parse_args()
@@ -460,7 +460,7 @@ def main() -> int:
 
     lan_url = f"http://{get_lan_ip()}:{args.port}"
     local_url = f"http://127.0.0.1:{args.port}"
-    print("Couples Snake server is running")
+    print("Prince&Phoibe server is running")
     print(f"Local: {local_url}")
     print(f"Phones on the same Wi-Fi: {lan_url}")
     print("Press Ctrl+C to stop.")

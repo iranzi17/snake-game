@@ -14,7 +14,7 @@ BLOCK_SIZE = 20
 SPEED = 10
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Couples Snake")
+pygame.display.set_caption("Prince&Phoibe")
 clock = pygame.time.Clock()
 
 FONT = pygame.font.SysFont("Arial", 24)

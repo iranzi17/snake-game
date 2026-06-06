@@ -41,14 +41,14 @@ jobs:
         shell: bash
         run: |
           mkdir -p release
-          cp app/build/outputs/apk/release/app-release.apk release/CouplesSnake-${GITHUB_REF_NAME:-manual}.apk
-          zip -r release/CouplesSnake-source-${GITHUB_REF_NAME:-manual}.zip . \
+          cp app/build/outputs/apk/release/app-release.apk release/PrinceAndPhoibe-${GITHUB_REF_NAME:-manual}.apk
+          zip -r release/PrinceAndPhoibe-source-${GITHUB_REF_NAME:-manual}.zip . \
             -x ".git/*" ".gradle/*" "release/*" "**/build/*"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CouplesSnake-android
+          name: PrinceAndPhoibe-android
           path: release/*
 
       - name: Publish GitHub release
@@ -57,5 +57,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${GITHUB_REF_NAME}" release/* \
-            --title "Couples Snake ${GITHUB_REF_NAME}" \
+            --title "Prince&Phoibe ${GITHUB_REF_NAME}" \
             --notes "Install the APK on both Android phones. Run the Python server from the source backup, enter the server URL in the app, then create or join a room code."
