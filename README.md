@@ -1,6 +1,6 @@
 # Prince&Phoibe
 
-Prince&Phoibe is a snake game for Android phones. You can play alone offline, or two players can connect to the same game server, create or join a room code, then compete for the same food while keeping separate scores.
+Prince&Phoibe is a snake game for Android phones and desktop browsers. You can play alone offline on Android, play Android-vs-Android, or play Android-vs-PC by connecting both players to the same Render game server.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Firanzi17%2Fsnake-game)
 
@@ -8,7 +8,7 @@ Prince&Phoibe is a snake game for Android phones. You can play alone offline, or
 
 - `app/` native Android app source.
 - `mobile_snake_server.py` multiplayer room-code server.
-- `web/` browser version for phones on the same Wi-Fi.
+- `web/` browser version for phones and PCs.
 - `snake_game.py` desktop pygame prototype.
 - `.github/workflows/android-release.yml` GitHub Actions build and release workflow.
 - `render.yaml` Render Blueprint for free online hosting.
@@ -24,6 +24,28 @@ https://prince-phoibe-snake.onrender.com
 ```
 
 If Render gives your service a different URL, enter that URL in the app.
+
+## Android vs PC Browser
+
+Use this flow when one person is on Android and the other is on a computer:
+
+1. Install the latest APK on Android.
+2. Open this browser link on the PC:
+
+   ```text
+   https://prince-phoibe-snake.onrender.com
+   ```
+
+3. Use this same server URL in the Android app:
+
+   ```text
+   https://prince-phoibe-snake.onrender.com
+   ```
+
+4. One player creates a room.
+5. The other player joins with the room code.
+
+The PC player can play from the browser with the keyboard or the on-screen controls. The Android player can use the app controls.
 
 ## Host on Render
 
