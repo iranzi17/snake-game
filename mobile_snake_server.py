@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import os
 import secrets
 import socket
 import sys
@@ -446,7 +447,7 @@ def get_lan_ip() -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the Prince&Phoibe phone server.")
     parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--port", default=8000, type=int)
+    parser.add_argument("--port", default=int(os.environ.get("PORT", "8000")), type=int)
     args = parser.parse_args()
 
     if not WEB_DIR.exists():
@@ -458,11 +459,12 @@ def main() -> int:
     server = ThreadingHTTPServer((args.host, args.port), GameRequestHandler)
     server.daemon_threads = True
 
-    lan_url = f"http://{get_lan_ip()}:{args.port}"
+    render_url = os.environ.get("RENDER_EXTERNAL_URL")
+    lan_url = render_url or f"http://{get_lan_ip()}:{args.port}"
     local_url = f"http://127.0.0.1:{args.port}"
     print("Prince&Phoibe server is running")
     print(f"Local: {local_url}")
-    print(f"Phones on the same Wi-Fi: {lan_url}")
+    print(f"Phones/public URL: {lan_url}")
     print("Press Ctrl+C to stop.")
 
     try:

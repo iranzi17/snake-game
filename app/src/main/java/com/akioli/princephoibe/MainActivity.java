@@ -48,7 +48,7 @@ import java.util.concurrent.Executors;
 
 
 public class MainActivity extends Activity {
-    private static final String DEFAULT_SERVER_URL = "";
+    private static final String DEFAULT_SERVER_URL = "https://prince-phoibe-snake.onrender.com";
     private static final String OLD_DEFAULT_SERVER_URL = "http://192.168.1.102:8000";
     private static final int BG = Color.rgb(16, 19, 25);
     private static final int PANEL = Color.rgb(24, 29, 36);
@@ -195,7 +195,7 @@ public class MainActivity extends Activity {
 
         addSpace(panel, 14);
 
-        serverInput = field("Server URL, for example http://192.168.1.107:8000", serverUrl);
+        serverInput = field("Server URL", serverUrl);
         panel.addView(serverInput);
 
         addSpace(panel, 12);

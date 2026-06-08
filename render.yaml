@@ -1,0 +1,11 @@
+services:
+  - type: web
+    runtime: python
+    name: prince-phoibe-snake
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python mobile_snake_server.py
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
