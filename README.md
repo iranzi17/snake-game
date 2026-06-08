@@ -23,15 +23,17 @@ To play with two phones:
    ```
 
 2. Install the APK on both Android phones.
-3. Open the app and enter the server URL printed by the server, for example:
+3. Open the app and enter the current phone URL printed by the server, for example:
 
    ```text
-   http://192.168.1.102:8000
+   http://192.168.1.107:8000
    ```
 
 4. One phone creates a room. The other phone joins with the room code.
 
 For internet play, host `mobile_snake_server.py` on a public server or expose port `8000` with a tunnel, then enter that public URL in the Android app.
+
+If room creation fails, make sure the computer and phones are on the same Wi-Fi, the Python server is still running, and Windows Firewall allows Python to accept connections.
 
 ## Play in a browser
 
@@ -42,9 +44,9 @@ Both phones can also open the server URL directly in Chrome. One phone creates a
 The workflow builds a signed installable APK with GitHub Actions. To publish a release from GitHub:
 
 ```powershell
-git tag v1.0.2
+git tag v1.0.3
 git push origin main
-git push origin v1.0.2
+git push origin v1.0.3
 ```
 
 GitHub will build the APK and attach it to the release tag. The release also includes a source zip backup of this folder.

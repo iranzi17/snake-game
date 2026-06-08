@@ -36,6 +36,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -46,7 +48,8 @@ import java.util.concurrent.Executors;
 
 
 public class MainActivity extends Activity {
-    private static final String DEFAULT_SERVER_URL = "http://192.168.1.102:8000";
+    private static final String DEFAULT_SERVER_URL = "";
+    private static final String OLD_DEFAULT_SERVER_URL = "http://192.168.1.102:8000";
     private static final int BG = Color.rgb(16, 19, 25);
     private static final int PANEL = Color.rgb(24, 29, 36);
     private static final int PANEL_STRONG = Color.rgb(32, 39, 50);
@@ -125,6 +128,10 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         preferences = getSharedPreferences("couples_snake", MODE_PRIVATE);
         serverUrl = preferences.getString("serverUrl", DEFAULT_SERVER_URL);
+        if (OLD_DEFAULT_SERVER_URL.equals(serverUrl)) {
+            serverUrl = DEFAULT_SERVER_URL;
+            preferences.edit().remove("serverUrl").apply();
+        }
         roomCode = preferences.getString("roomCode", "");
         playerId = preferences.getString("playerId", "");
 
@@ -188,7 +195,7 @@ public class MainActivity extends Activity {
 
         addSpace(panel, 14);
 
-        serverInput = field("Server URL", preferences.getString("serverUrl", DEFAULT_SERVER_URL));
+        serverInput = field("Server URL, for example http://192.168.1.107:8000", serverUrl);
         panel.addView(serverInput);
 
         addSpace(panel, 12);
@@ -381,6 +388,9 @@ public class MainActivity extends Activity {
     private void createRoom() {
         saveHomeFields();
         setHomeStatus("", MUTED);
+        if (!hasServerUrl()) {
+            return;
+        }
 
         JSONObject body = new JSONObject();
         try {
@@ -404,6 +414,9 @@ public class MainActivity extends Activity {
     private void joinRoom() {
         saveHomeFields();
         setHomeStatus("", MUTED);
+        if (!hasServerUrl()) {
+            return;
+        }
 
         String code = roomInput.getText().toString().trim().toUpperCase(Locale.US);
         roomInput.setText(code);
@@ -839,7 +852,7 @@ public class MainActivity extends Activity {
     private String normalizeServerUrl(String rawValue) {
         String value = rawValue.trim();
         if (value.isEmpty()) {
-            value = DEFAULT_SERVER_URL;
+            return DEFAULT_SERVER_URL;
         }
         if (!value.startsWith("http://") && !value.startsWith("https://")) {
             value = "http://" + value;
@@ -848,6 +861,15 @@ public class MainActivity extends Activity {
             value = value.substring(0, value.length() - 1);
         }
         return value;
+    }
+
+    private boolean hasServerUrl() {
+        if (!serverUrl.isEmpty()) {
+            return true;
+        }
+
+        setHomeStatus("Enter the server URL printed by mobile_snake_server.py", Color.rgb(255, 141, 141));
+        return false;
     }
 
     private void setHomeStatus(String message, int color) {
@@ -1016,7 +1038,7 @@ public class MainActivity extends Activity {
                 JSONObject json = request("GET", path, null);
                 mainHandler.post(() -> callback.onSuccess(json));
             } catch (Exception error) {
-                mainHandler.post(() -> callback.onError(error.getMessage()));
+                mainHandler.post(() -> callback.onError(friendlyNetworkError(error)));
             }
         });
     }
@@ -1027,9 +1049,27 @@ public class MainActivity extends Activity {
                 JSONObject json = request("POST", path, body);
                 mainHandler.post(() -> callback.onSuccess(json));
             } catch (Exception error) {
-                mainHandler.post(() -> callback.onError(error.getMessage()));
+                mainHandler.post(() -> callback.onError(friendlyNetworkError(error)));
             }
         });
+    }
+
+    private String friendlyNetworkError(Exception error) {
+        if (error instanceof MalformedURLException) {
+            return "Check the server URL format.";
+        }
+        if (error instanceof SocketTimeoutException) {
+            return "Server not reachable. Check Wi-Fi, server URL, and firewall.";
+        }
+
+        String message = error.getMessage();
+        if (message == null || message.trim().isEmpty()) {
+            return "Server not reachable. Check the server URL.";
+        }
+        if (message.toLowerCase(Locale.US).contains("failed to connect")) {
+            return "Server not reachable. Start the Python server and use its phone URL.";
+        }
+        return message;
     }
 
     private JSONObject request(String method, String path, JSONObject body) throws IOException, JSONException {
